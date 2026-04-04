@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 // Test modes: dotnet run -- --test <blogUrl>
 //             dotnet run -- --post <blogUrl> <username> <password>
-if (args.Length > 0 && args[0] is "--test" or "--post")
+if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
 {
     var httpClient = new HttpClient();
     var rsdDiscovery = new RsdDiscovery(httpClient);
@@ -38,6 +38,25 @@ if (args.Length > 0 && args[0] is "--test" or "--post")
         Console.WriteLine("=== Listing Recent Posts ===");
         var posts = await BlogTools.ListPosts(factory, 3);
         Console.WriteLine(posts);
+    }
+
+    if (args[0] == "--edit" && args.Length >= 5)
+    {
+        config.Username = args[2];
+        config.Password = args[3];
+        var editPostId = args[4];
+
+        Console.WriteLine();
+        Console.WriteLine($"=== Editing Post {editPostId} ===");
+        var editResult = await BlogTools.EditPost(factory,
+            postId: editPostId,
+            title: "Testing the Blog MCP Server",
+            content: "<p>This post was created by the Blog MCP Server, an MCP server that supports MetaWeblog, Blogger, and Movable Type APIs.</p>"
+                + "<p>The server auto-discovered this blog's capabilities via RSD (Really Simple Discovery) and posted using the MetaWeblog API.</p>"
+                + "<p><em>This post was edited remotely via the Blog MCP Server's edit_post tool.</em></p>",
+            publish: true,
+            categories: "dasblog-core");
+        Console.WriteLine(editResult);
     }
 
     return;
