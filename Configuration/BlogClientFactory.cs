@@ -27,7 +27,13 @@ public class BlogClientFactory
 
         if (string.IsNullOrEmpty(profile.XmlRpcEndpoint))
             throw new InvalidOperationException(
-                $"XmlRpcEndpoint not set for '{blogName}'. Run discover_blog first or configure manually.");
+                $"XmlRpcEndpoint not set for '{blogName}'. Run discover_blog with this blog's URL first.");
+
+        if (string.IsNullOrEmpty(profile.Username) || string.IsNullOrEmpty(profile.Password))
+            throw new InvalidOperationException(
+                $"Credentials missing for '{blogName}'. The user needs to run these commands in the blog-mcp-server project directory:\n"
+                + $"  dotnet user-secrets set \"Blog:Blogs:{blogName}:Username\" \"<username>\"\n"
+                + $"  dotnet user-secrets set \"Blog:Blogs:{blogName}:Password\" \"<password>\"");
 
         var rpc = new XmlRpcClient(_httpClient, profile.XmlRpcEndpoint);
         return CreateForApi(profile.PreferredApi, rpc, profile);
