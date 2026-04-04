@@ -15,8 +15,8 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
     // MT doesn't define core post CRUD; delegate to a companion MetaWeblog or Blogger client
     private readonly IBlogClient? _companion;
 
-    public MovableTypeClient(XmlRpcClient rpc, BlogConfiguration config, IBlogClient? companion = null)
-        : base(rpc, config)
+    public MovableTypeClient(XmlRpcClient rpc, BlogProfile profile, IBlogClient? companion = null)
+        : base(rpc, profile)
     {
         _companion = companion;
     }
@@ -41,7 +41,7 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<List<BlogCategory>> GetCategoriesAsync()
     {
         var result = await Rpc.InvokeArrayAsync("mt.getCategoryList",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password));
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password));
 
         return result.Select(v =>
         {
@@ -57,7 +57,7 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<List<BlogCategory>> GetPostCategoriesAsync(string postId)
     {
         var result = await Rpc.InvokeArrayAsync("mt.getPostCategories",
-            Str(postId), Str(Config.Username), Str(Config.Password));
+            Str(postId), Str(Profile.Username), Str(Profile.Password));
 
         return result.Select(v =>
         {
@@ -80,7 +80,7 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
             })).ToList();
 
         var result = await Rpc.InvokeAsync("mt.setPostCategories",
-            Str(postId), Str(Config.Username), Str(Config.Password), new XmlRpcValue(cats));
+            Str(postId), Str(Profile.Username), Str(Profile.Password), new XmlRpcValue(cats));
 
         return result.AsBool();
     }
@@ -89,7 +89,7 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<List<PostTitle>> GetRecentPostTitlesAsync(int count)
     {
         var result = await Rpc.InvokeArrayAsync("mt.getRecentPostTitles",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password), Int(count));
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password), Int(count));
 
         return result.Select(v =>
         {

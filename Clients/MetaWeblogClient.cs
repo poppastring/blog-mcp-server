@@ -11,12 +11,12 @@ public class MetaWeblogClient : XmlRpcBlogClientBase, IBlogClient
 {
     public string ApiName => "MetaWeblog";
 
-    public MetaWeblogClient(XmlRpcClient rpc, BlogConfiguration config) : base(rpc, config) { }
+    public MetaWeblogClient(XmlRpcClient rpc, BlogProfile profile) : base(rpc, profile) { }
 
     public async Task<List<BlogPost>> GetRecentPostsAsync(int count)
     {
         var result = await Rpc.InvokeArrayAsync("metaWeblog.getRecentPosts",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password), Int(count));
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password), Int(count));
 
         return result.Select(v => MapToPost(v.AsStruct())).ToList();
     }
@@ -24,7 +24,7 @@ public class MetaWeblogClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<BlogPost> GetPostAsync(string postId)
     {
         var result = await Rpc.InvokeStructAsync("metaWeblog.getPost",
-            Str(postId), Str(Config.Username), Str(Config.Password));
+            Str(postId), Str(Profile.Username), Str(Profile.Password));
 
         return MapToPost(result);
     }
@@ -33,7 +33,7 @@ public class MetaWeblogClient : XmlRpcBlogClientBase, IBlogClient
     {
         var postStruct = Struct(MapFromPost(post));
         var result = await Rpc.InvokeAsync("metaWeblog.newPost",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password), postStruct, Bool(publish));
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password), postStruct, Bool(publish));
 
         return result.AsString();
     }
@@ -42,7 +42,7 @@ public class MetaWeblogClient : XmlRpcBlogClientBase, IBlogClient
     {
         var postStruct = Struct(MapFromPost(post));
         var result = await Rpc.InvokeAsync("metaWeblog.editPost",
-            Str(postId), Str(Config.Username), Str(Config.Password), postStruct, Bool(publish));
+            Str(postId), Str(Profile.Username), Str(Profile.Password), postStruct, Bool(publish));
 
         return result.AsBool();
     }
@@ -56,7 +56,7 @@ public class MetaWeblogClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<List<BlogCategory>> GetCategoriesAsync()
     {
         var result = await Rpc.InvokeArrayAsync("metaWeblog.getCategories",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password));
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password));
 
         return result.Select(v =>
         {
@@ -92,7 +92,7 @@ public class MetaWeblogClient : XmlRpcBlogClientBase, IBlogClient
         });
 
         var result = await Rpc.InvokeStructAsync("metaWeblog.newMediaObject",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password), mediaStruct);
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password), mediaStruct);
 
         return new MediaUploadResult { Url = GetString(result, "url") };
     }

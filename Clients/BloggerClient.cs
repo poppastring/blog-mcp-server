@@ -10,14 +10,14 @@ namespace BlogMcpServer.Clients;
 public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
 {
     public string ApiName => "Blogger";
-    private const string AppKey = ""; // Legacy field, not used by modern implementations
+    private const string AppKey = "";
 
-    public BloggerClient(XmlRpcClient rpc, BlogConfiguration config) : base(rpc, config) { }
+    public BloggerClient(XmlRpcClient rpc, BlogProfile profile) : base(rpc, profile) { }
 
     public async Task<List<BlogPost>> GetRecentPostsAsync(int count)
     {
         var result = await Rpc.InvokeArrayAsync("blogger.getRecentPosts",
-            Str(AppKey), Str(Config.BlogId), Str(Config.Username), Str(Config.Password), Int(count));
+            Str(AppKey), Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password), Int(count));
 
         return result.Select(v =>
         {
@@ -36,7 +36,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<BlogPost> GetPostAsync(string postId)
     {
         var result = await Rpc.InvokeStructAsync("blogger.getPost",
-            Str(AppKey), Str(postId), Str(Config.Username), Str(Config.Password));
+            Str(AppKey), Str(postId), Str(Profile.Username), Str(Profile.Password));
 
         var post = new BlogPost
         {
@@ -52,7 +52,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     {
         var content = FormatBloggerContent(post);
         var result = await Rpc.InvokeAsync("blogger.newPost",
-            Str(AppKey), Str(Config.BlogId), Str(Config.Username), Str(Config.Password),
+            Str(AppKey), Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password),
             Str(content), Bool(publish));
 
         return result.AsString();
@@ -62,7 +62,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     {
         var content = FormatBloggerContent(post);
         var result = await Rpc.InvokeAsync("blogger.editPost",
-            Str(AppKey), Str(postId), Str(Config.Username), Str(Config.Password),
+            Str(AppKey), Str(postId), Str(Profile.Username), Str(Profile.Password),
             Str(content), Bool(publish));
 
         return result.AsBool();
@@ -71,7 +71,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<bool> DeletePostAsync(string postId)
     {
         var result = await Rpc.InvokeAsync("blogger.deletePost",
-            Str(AppKey), Str(postId), Str(Config.Username), Str(Config.Password), Bool(true));
+            Str(AppKey), Str(postId), Str(Profile.Username), Str(Profile.Password), Bool(true));
 
         return result.AsBool();
     }
@@ -79,7 +79,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<List<BlogCategory>> GetCategoriesAsync()
     {
         var result = await Rpc.InvokeArrayAsync("blogger.getCategories",
-            Str(Config.BlogId), Str(Config.Username), Str(Config.Password));
+            Str(Profile.BlogId), Str(Profile.Username), Str(Profile.Password));
 
         return result.Select(v =>
         {
@@ -113,7 +113,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<BlogUser> GetUserInfoAsync()
     {
         var result = await Rpc.InvokeStructAsync("blogger.getUserInfo",
-            Str(AppKey), Str(Config.Username), Str(Config.Password));
+            Str(AppKey), Str(Profile.Username), Str(Profile.Password));
 
         return new BlogUser
         {
@@ -129,7 +129,7 @@ public class BloggerClient : XmlRpcBlogClientBase, IBlogClient
     public async Task<List<BlogInfo>> GetUsersBlogsAsync()
     {
         var result = await Rpc.InvokeArrayAsync("blogger.getUsersBlogs",
-            Str(AppKey), Str(Config.Username), Str(Config.Password));
+            Str(AppKey), Str(Profile.Username), Str(Profile.Password));
 
         return result.Select(v =>
         {

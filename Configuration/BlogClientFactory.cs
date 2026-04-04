@@ -1,14 +1,11 @@
-using System.Text.Json;
 using BlogMcpServer.Clients;
-using BlogMcpServer.Configuration;
 using BlogMcpServer.Discovery;
 using BlogMcpServer.XmlRpc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BlogMcpServer.Configuration;
 
 /// <summary>
-/// Resolves the appropriate IBlogClient based on configuration and RSD discovery.
+/// Resolves the appropriate IBlogClient for a given blog profile.
 /// </summary>
 public class BlogClientFactory
 {
@@ -22,43 +19,51 @@ public class BlogClientFactory
     }
 
     /// <summary>
-    /// Create an IBlogClient from explicit configuration.
+    /// Create an IBlogClient for the named blog profile (or default).
     /// </summary>
-    public IBlogClient Create()
+    public IBlogClient Create(string? blogName = null)
     {
-        if (string.IsNullOrEmpty(_config.XmlRpcEndpoint))
-            throw new InvalidOperationException("XmlRpcEndpoint is not configured. Run discover_blog first or set it manually.");
+        var profile = _config.GetProfile(blogName);
 
-        var rpc = new XmlRpcClient(_httpClient, _config.XmlRpcEndpoint);
-        return CreateForApi(_config.PreferredApi, rpc);
+        if (string.IsNullOrEmpty(profile.XmlRpcEndpoint))
+            throw new InvalidOperationException(
+                "XmlRpcEndpoint is not configured. Run discover_blog first or set it manually.");
+
+        var rpc = new XmlRpcClient(_httpClient, profile.XmlRpcEndpoint);
+        return CreateForApi(profile.PreferredApi, rpc, profile);
     }
 
     /// <summary>
-    /// Create an IBlogClient from RSD discovery results, updating config.
+    /// Create an IBlogClient from RSD discovery results, updating the named profile.
     /// </summary>
-    public IBlogClient CreateFromRsd(RsdInfo rsd)
+    public IBlogClient CreateFromRsd(RsdInfo rsd, string blogName)
     {
+        var profile = _config.EnsureProfile(blogName);
+
         var preferred = rsd.Apis.FirstOrDefault(a => a.Preferred) ?? rsd.Apis.FirstOrDefault();
         if (preferred == null)
             throw new InvalidOperationException("No APIs found in RSD document.");
 
-        _config.XmlRpcEndpoint = preferred.ApiLink;
-        _config.BlogId = preferred.BlogId;
-        if (string.IsNullOrEmpty(_config.PreferredApi))
-            _config.PreferredApi = preferred.Name;
+        profile.XmlRpcEndpoint = preferred.ApiLink;
+        profile.BlogId = preferred.BlogId;
+        if (string.IsNullOrEmpty(profile.PreferredApi))
+            profile.PreferredApi = preferred.Name;
+
+        if (string.IsNullOrEmpty(_config.DefaultBlog))
+            _config.DefaultBlog = blogName;
 
         var rpc = new XmlRpcClient(_httpClient, preferred.ApiLink);
-        return CreateForApi(_config.PreferredApi, rpc);
+        return CreateForApi(profile.PreferredApi, rpc, profile);
     }
 
-    private IBlogClient CreateForApi(string apiName, XmlRpcClient rpc)
+    private static IBlogClient CreateForApi(string apiName, XmlRpcClient rpc, BlogProfile profile)
     {
         return apiName switch
         {
-            "Blogger" => new BloggerClient(rpc, _config),
+            "Blogger" => new BloggerClient(rpc, profile),
             "Moveable Type" or "MovableType" or "Movable Type"
-                => new MovableTypeClient(rpc, _config, new MetaWeblogClient(rpc, _config)),
-            _ => new MetaWeblogClient(rpc, _config), // Default to MetaWeblog
+                => new MovableTypeClient(rpc, profile, new MetaWeblogClient(rpc, profile)),
+            _ => new MetaWeblogClient(rpc, profile),
         };
     }
 }

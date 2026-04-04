@@ -10,12 +10,12 @@ namespace BlogMcpServer.Clients;
 public abstract class XmlRpcBlogClientBase
 {
     protected readonly XmlRpcClient Rpc;
-    protected readonly BlogConfiguration Config;
+    protected readonly BlogProfile Profile;
 
-    protected XmlRpcBlogClientBase(XmlRpcClient rpc, BlogConfiguration config)
+    protected XmlRpcBlogClientBase(XmlRpcClient rpc, BlogProfile profile)
     {
         Rpc = rpc;
-        Config = config;
+        Profile = profile;
     }
 
     protected XmlRpcValue Str(string s) => new(s);

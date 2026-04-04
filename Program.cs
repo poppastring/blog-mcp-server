@@ -1,6 +1,7 @@
 using BlogMcpServer.Configuration;
 using BlogMcpServer.Discovery;
 using BlogMcpServer.Tools;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,8 +22,9 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
 
     if (args[0] == "--post" && args.Length >= 4)
     {
-        config.Username = args[2];
-        config.Password = args[3];
+        var profile = config.GetProfile();
+        profile.Username = args[2];
+        profile.Password = args[3];
 
         Console.WriteLine();
         Console.WriteLine("=== Creating Post ===");
@@ -42,8 +44,9 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
 
     if (args[0] == "--edit" && args.Length >= 5)
     {
-        config.Username = args[2];
-        config.Password = args[3];
+        var profile = config.GetProfile();
+        profile.Username = args[2];
+        profile.Password = args[3];
         var editPostId = args[4];
 
         Console.WriteLine();
@@ -64,8 +67,9 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Blog configuration (singleton, mutable at runtime via discover/configure tools)
+// Load blog profiles from configuration (appsettings.json, user-secrets, env vars)
 var blogConfig = new BlogConfiguration();
+builder.Configuration.GetSection("Blog").Bind(blogConfig);
 builder.Services.AddSingleton(blogConfig);
 
 // HTTP client for XML-RPC and RSD
