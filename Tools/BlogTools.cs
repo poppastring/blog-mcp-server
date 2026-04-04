@@ -22,7 +22,7 @@ public class BlogTools
         BlogClientFactory factory,
         BlogConfiguration config,
         [Description("The blog URL to discover (e.g. https://www.poppastring.com)")] string blogUrl,
-        [Description("Profile name for this blog (e.g. poppastring, thedasblog)")] string blogName = "")
+        [Description("Profile name for this blog (e.g. poppastring, thedasblog)")] string blogName)
     {
         var rsd = await rsdDiscovery.DiscoverAsync(blogUrl);
         if (rsd == null)
@@ -90,10 +90,10 @@ public class BlogTools
     [McpServerTool(Name = "list_posts"), Description("Get recent blog posts. Returns titles, dates, IDs, and excerpts.")]
     public static async Task<string> ListPosts(
         BlogClientFactory factory,
-        [Description("Number of recent posts to retrieve (default 10)")] int count = 10,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName,
+        [Description("Number of recent posts to retrieve (default 10)")] int count = 10)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var posts = await client.GetRecentPostsAsync(count);
 
         return JsonSerializer.Serialize(posts.Select(p => new
@@ -111,9 +111,9 @@ public class BlogTools
     public static async Task<string> GetPost(
         BlogClientFactory factory,
         [Description("The post ID to retrieve")] string postId,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var post = await client.GetPostAsync(postId);
 
         return JsonSerializer.Serialize(post, JsonOptions);
@@ -122,14 +122,14 @@ public class BlogTools
     [McpServerTool(Name = "create_post"), Description("Create a new blog post.")]
     public static async Task<string> CreatePost(
         BlogClientFactory factory,
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName,
         [Description("Post title")] string title,
         [Description("Post content (HTML)")] string content,
         [Description("Publish immediately (true) or save as draft (false)")] bool publish = false,
         [Description("Comma-separated category names")] string categories = "",
-        [Description("Post excerpt/description")] string excerpt = "",
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Post excerpt/description")] string excerpt = "")
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var post = new Models.BlogPost
         {
             Title = title,
@@ -146,15 +146,15 @@ public class BlogTools
     [McpServerTool(Name = "edit_post"), Description("Update an existing blog post.")]
     public static async Task<string> EditPost(
         BlogClientFactory factory,
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName,
         [Description("The post ID to update")] string postId,
         [Description("New post title")] string title,
         [Description("New post content (HTML)")] string content,
         [Description("Publish the update (true) or keep as draft (false)")] bool publish = true,
         [Description("Comma-separated category names")] string categories = "",
-        [Description("Post excerpt/description")] string excerpt = "",
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Post excerpt/description")] string excerpt = "")
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var post = new Models.BlogPost
         {
             Title = title,
@@ -171,9 +171,9 @@ public class BlogTools
     public static async Task<string> DeletePost(
         BlogClientFactory factory,
         [Description("The post ID to delete")] string postId,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var success = await client.DeletePostAsync(postId);
         return success ? $"Post {postId} deleted." : $"Failed to delete post {postId}.";
     }
@@ -181,9 +181,9 @@ public class BlogTools
     [McpServerTool(Name = "get_categories"), Description("List all available blog categories.")]
     public static async Task<string> GetCategories(
         BlogClientFactory factory,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var categories = await client.GetCategoriesAsync();
         return JsonSerializer.Serialize(categories, JsonOptions);
     }
@@ -193,9 +193,9 @@ public class BlogTools
         BlogClientFactory factory,
         [Description("The post ID")] string postId,
         [Description("Comma-separated category IDs")] string categoryIds,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var ids = categoryIds.Split(',', StringSplitOptions.TrimEntries);
         var success = await client.SetPostCategoriesAsync(postId, ids);
         return success ? $"Categories set on post {postId}." : $"Failed to set categories on post {postId}.";
@@ -207,9 +207,9 @@ public class BlogTools
         [Description("File name (e.g. photo.jpg)")] string fileName,
         [Description("MIME type (e.g. image/jpeg)")] string mimeType,
         [Description("Base64-encoded file content")] string base64Data,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var data = Convert.FromBase64String(base64Data);
         var result = await client.UploadMediaAsync(fileName, mimeType, data);
         return JsonSerializer.Serialize(result, JsonOptions);
@@ -218,9 +218,9 @@ public class BlogTools
     [McpServerTool(Name = "get_user_info"), Description("Get information about the authenticated blog user.")]
     public static async Task<string> GetUserInfo(
         BlogClientFactory factory,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var user = await client.GetUserInfoAsync();
         return JsonSerializer.Serialize(user, JsonOptions);
     }
@@ -228,14 +228,12 @@ public class BlogTools
     [McpServerTool(Name = "get_users_blogs"), Description("List blogs accessible to the authenticated user.")]
     public static async Task<string> GetUsersBlogs(
         BlogClientFactory factory,
-        [Description("Blog profile name (uses default if omitted)")] string blogName = "")
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
     {
-        var client = factory.Create(NullIfEmpty(blogName));
+        var client = factory.Create(blogName);
         var blogs = await client.GetUsersBlogsAsync();
         return JsonSerializer.Serialize(blogs, JsonOptions);
     }
-
-    private static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
 
     private static string Truncate(string text, int maxLength)
         => text.Length <= maxLength ? text : text[..maxLength] + "...";

@@ -19,15 +19,15 @@ public class BlogClientFactory
     }
 
     /// <summary>
-    /// Create an IBlogClient for the named blog profile (or default).
+    /// Create an IBlogClient for the named blog profile.
     /// </summary>
-    public IBlogClient Create(string? blogName = null)
+    public IBlogClient Create(string blogName)
     {
         var profile = _config.GetProfile(blogName);
 
         if (string.IsNullOrEmpty(profile.XmlRpcEndpoint))
             throw new InvalidOperationException(
-                "XmlRpcEndpoint is not configured. Run discover_blog first or set it manually.");
+                $"XmlRpcEndpoint not set for '{blogName}'. Run discover_blog first or configure manually.");
 
         var rpc = new XmlRpcClient(_httpClient, profile.XmlRpcEndpoint);
         return CreateForApi(profile.PreferredApi, rpc, profile);

@@ -17,18 +17,19 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
     var factory = new BlogClientFactory(config, httpClient);
 
     Console.WriteLine("=== RSD Discovery ===");
-    var discoverResult = await BlogTools.DiscoverBlog(rsdDiscovery, factory, config, blogUrl);
+    var discoverResult = await BlogTools.DiscoverBlog(rsdDiscovery, factory, config, blogUrl, "test");
     Console.WriteLine(discoverResult);
 
     if (args[0] == "--post" && args.Length >= 4)
     {
-        var profile = config.GetProfile();
+        var profile = config.GetProfile("test");
         profile.Username = args[2];
         profile.Password = args[3];
 
         Console.WriteLine();
         Console.WriteLine("=== Creating Post ===");
         var postResult = await BlogTools.CreatePost(factory,
+            blogName: "test",
             title: "Testing the Blog MCP Server",
             content: "<p>This post was created by the Blog MCP Server, an MCP server that supports MetaWeblog, Blogger, and Movable Type APIs.</p>"
                 + "<p>The server auto-discovered this blog's capabilities via RSD (Really Simple Discovery) and posted using the MetaWeblog API.</p>",
@@ -38,13 +39,13 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
 
         Console.WriteLine();
         Console.WriteLine("=== Listing Recent Posts ===");
-        var posts = await BlogTools.ListPosts(factory, 3);
+        var posts = await BlogTools.ListPosts(factory, blogName: "test", count: 3);
         Console.WriteLine(posts);
     }
 
     if (args[0] == "--edit" && args.Length >= 5)
     {
-        var profile = config.GetProfile();
+        var profile = config.GetProfile("test");
         profile.Username = args[2];
         profile.Password = args[3];
         var editPostId = args[4];
@@ -52,6 +53,7 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
         Console.WriteLine();
         Console.WriteLine($"=== Editing Post {editPostId} ===");
         var editResult = await BlogTools.EditPost(factory,
+            blogName: "test",
             postId: editPostId,
             title: "Testing the Blog MCP Server",
             content: "<p>This post was created by the Blog MCP Server, an MCP server that supports MetaWeblog, Blogger, and Movable Type APIs.</p>"

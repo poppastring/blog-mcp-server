@@ -15,30 +15,22 @@ public class BlogConfiguration
     public Dictionary<string, BlogProfile> Blogs { get; set; } = new();
     public string DefaultBlog { get; set; } = string.Empty;
 
-    public BlogProfile GetProfile(string? blogName = null)
+    public BlogProfile GetProfile(string blogName)
     {
-        var name = string.IsNullOrEmpty(blogName) ? DefaultBlog : blogName;
-
-        if (!string.IsNullOrEmpty(name) && Blogs.TryGetValue(name, out var profile))
+        if (Blogs.TryGetValue(blogName, out var profile))
             return profile;
 
-        // Return first profile if no name specified
-        if (Blogs.Count > 0)
-            return Blogs.Values.First();
-
         throw new InvalidOperationException(
-            "No blog profiles configured. Use configure_blog or set up profiles in user-secrets.");
+            $"Blog profile '{blogName}' not found. Configured profiles: {string.Join(", ", Blogs.Keys)}");
     }
 
-    public string GetProfileName(string? blogName = null)
+    public string GetProfileName(string blogName)
     {
-        if (!string.IsNullOrEmpty(blogName) && Blogs.ContainsKey(blogName))
+        if (Blogs.ContainsKey(blogName))
             return blogName;
 
-        if (!string.IsNullOrEmpty(DefaultBlog) && Blogs.ContainsKey(DefaultBlog))
-            return DefaultBlog;
-
-        return Blogs.Keys.FirstOrDefault() ?? "default";
+        throw new InvalidOperationException(
+            $"Blog profile '{blogName}' not found. Configured profiles: {string.Join(", ", Blogs.Keys)}");
     }
 
     public BlogProfile EnsureProfile(string blogName)
