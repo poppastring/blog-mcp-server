@@ -5,40 +5,39 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-// Quick test mode: dotnet run -- --test
-if (args.Length > 0 && args[0] == "--test")
+// Test modes: dotnet run -- --test <blogUrl>
+//             dotnet run -- --post <blogUrl> <username> <password>
+if (args.Length > 0 && args[0] is "--test" or "--post")
 {
     var httpClient = new HttpClient();
     var rsdDiscovery = new RsdDiscovery(httpClient);
+    var blogUrl = args.Length > 1 ? args[1] : "https://thedasblog.com";
     var config = new BlogConfiguration();
     var factory = new BlogClientFactory(config, httpClient);
 
     Console.WriteLine("=== RSD Discovery ===");
-    var result = await BlogTools.DiscoverBlog(rsdDiscovery, factory, config, "https://thedasblog.com");
-    Console.WriteLine(result);
+    var discoverResult = await BlogTools.DiscoverBlog(rsdDiscovery, factory, config, blogUrl);
+    Console.WriteLine(discoverResult);
 
-    Console.WriteLine();
-    Console.WriteLine("=== List Posts (no credentials, expect auth error) ===");
-    try
+    if (args[0] == "--post" && args.Length >= 4)
     {
-        var posts = await BlogTools.ListPosts(factory, 5);
+        config.Username = args[2];
+        config.Password = args[3];
+
+        Console.WriteLine();
+        Console.WriteLine("=== Creating Post ===");
+        var postResult = await BlogTools.CreatePost(factory,
+            title: "Testing the Blog MCP Server",
+            content: "<p>This post was created by the Blog MCP Server, an MCP server that supports MetaWeblog, Blogger, and Movable Type APIs.</p>"
+                + "<p>The server auto-discovered this blog's capabilities via RSD (Really Simple Discovery) and posted using the MetaWeblog API.</p>",
+            publish: true,
+            categories: "dasblog-core");
+        Console.WriteLine(postResult);
+
+        Console.WriteLine();
+        Console.WriteLine("=== Listing Recent Posts ===");
+        var posts = await BlogTools.ListPosts(factory, 3);
         Console.WriteLine(posts);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Expected error: {ex.Message}");
-    }
-
-    Console.WriteLine();
-    Console.WriteLine("=== Get Categories (no credentials, expect auth error) ===");
-    try
-    {
-        var cats = await BlogTools.GetCategories(factory);
-        Console.WriteLine(cats);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Expected error: {ex.Message}");
     }
 
     return;
