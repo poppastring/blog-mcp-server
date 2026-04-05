@@ -218,15 +218,50 @@ public class BlogTools
     [McpServerTool(Name = "upload_media"), Description("Upload a media file (image, etc.) to the blog. Provide base64-encoded file data.")]
     public static async Task<string> UploadMedia(
         BlogClientFactory factory,
+        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName,
         [Description("File name (e.g. photo.jpg)")] string fileName,
         [Description("MIME type (e.g. image/jpeg)")] string mimeType,
-        [Description("Base64-encoded file content")] string base64Data,
-        [Description("Blog profile name (e.g. poppastring, thedasblog)")] string blogName)
+        [Description("Base64-encoded file content")] string base64Data = "",
+        [Description("Absolute file path to read from disk (use instead of base64Data for large files)")] string filePath = "")
     {
         var client = factory.Create(blogName);
-        var data = Convert.FromBase64String(base64Data);
+
+        byte[] data;
+        if (!string.IsNullOrEmpty(filePath))
+        {
+            if (!File.Exists(filePath))
+                return $"File not found: {filePath}";
+            data = await File.ReadAllBytesAsync(filePath);
+            if (string.IsNullOrEmpty(fileName))
+                fileName = Path.GetFileName(filePath);
+            if (string.IsNullOrEmpty(mimeType))
+                mimeType = GuessContentType(filePath);
+        }
+        else if (!string.IsNullOrEmpty(base64Data))
+        {
+            data = Convert.FromBase64String(base64Data);
+        }
+        else
+        {
+            return "Provide either filePath or base64Data.";
+        }
+
         var result = await client.UploadMediaAsync(fileName, mimeType, data);
         return JsonSerializer.Serialize(result, JsonOptions);
+    }
+
+    private static string GuessContentType(string path)
+    {
+        return Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream",
+        };
     }
 
     [McpServerTool(Name = "get_user_info"), Description("Get information about the authenticated blog user.")]
