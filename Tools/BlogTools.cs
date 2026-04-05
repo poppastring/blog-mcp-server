@@ -141,7 +141,8 @@ public class BlogTools
         [Description("Post content (HTML)")] string content,
         [Description("Publish immediately (true) or save as draft (false)")] bool publish = false,
         [Description("Comma-separated category names")] string categories = "",
-        [Description("Post excerpt/description")] string excerpt = "")
+        [Description("Post excerpt/description")] string excerpt = "",
+        [Description("Post date in ISO 8601 format (e.g. 2026-04-08T12:00:00). Defaults to now if omitted.")] string dateCreated = "")
     {
         var client = factory.Create(blogName);
         var post = new Models.BlogPost
@@ -150,7 +151,9 @@ public class BlogTools
             Content = content,
             Excerpt = excerpt,
             Categories = string.IsNullOrEmpty(categories) ? [] : categories.Split(',', StringSplitOptions.TrimEntries),
-            DateCreated = DateTime.UtcNow,
+            DateCreated = string.IsNullOrEmpty(dateCreated)
+                ? DateTime.UtcNow
+                : DateTime.Parse(dateCreated),
         };
 
         var postId = await client.CreatePostAsync(post, publish);
