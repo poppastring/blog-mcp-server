@@ -49,14 +49,12 @@ public class BlogTools
             ConfiguredEndpoint = profile.XmlRpcEndpoint,
             NeedsCredentials = needsCredentials,
             SetupHint = needsCredentials
-                ? $"Credentials missing for '{blogName}'. The user needs to run these commands in the blog-mcp-server project directory:\n"
-                    + $"  dotnet user-secrets set \"Blog:Blogs:{blogName}:Username\" \"<username>\"\n"
-                    + $"  dotnet user-secrets set \"Blog:Blogs:{blogName}:Password\" \"<password>\""
+                ? $"Credentials missing for '{blogName}'. Ask the user for their username and password, then call configure_blog to save them."
                 : null,
         }, JsonOptions);
     }
 
-    [McpServerTool(Name = "configure_blog"), Description("Manually configure blog connection when RSD is not available.")]
+    [McpServerTool(Name = "configure_blog"), Description("Configure blog connection and save credentials. Persists to appsettings.local.json so credentials survive restarts.")]
     public static string ConfigureBlog(
         BlogConfiguration config,
         [Description("Profile name for this blog (e.g. poppastring, thedasblog)")] string blogName,
@@ -76,20 +74,19 @@ public class BlogTools
         if (string.IsNullOrEmpty(config.DefaultBlog))
             config.DefaultBlog = blogName;
 
-        return $"Configured '{blogName}': endpoint={xmlRpcEndpoint}, api={api}, blogId={blogId}";
+        var settingsPath = ConfigPersistence.GetLocalSettingsPath();
+        ConfigPersistence.Save(config);
+
+        return $"Configured '{blogName}': endpoint={xmlRpcEndpoint}, api={api}\n"
+            + $"Credentials saved to: {settingsPath}";
     }
 
     [McpServerTool(Name = "list_blogs"), Description("List all configured blog profiles. Call this first to check setup status.")]
     public static string ListBlogs(BlogConfiguration config)
     {
         if (config.Blogs.Count == 0)
-            return "No blog profiles configured. The user needs to set up credentials before using blog tools.\n\n"
-                + "Setup instructions (run in the blog-mcp-server project directory):\n"
-                + "  dotnet user-secrets set \"Blog:Blogs:<name>:Url\" \"https://example.com\"\n"
-                + "  dotnet user-secrets set \"Blog:Blogs:<name>:Username\" \"user@example.com\"\n"
-                + "  dotnet user-secrets set \"Blog:Blogs:<name>:Password\" \"password\"\n\n"
-                + "Replace <name> with a short profile name (e.g. poppastring, thedasblog).\n"
-                + "After setup, use discover_blog to auto-detect the XML-RPC endpoint via RSD.";
+            return "No blog profiles configured. Ask the user for their blog URL and credentials, "
+                + "then call discover_blog with the URL to detect APIs, followed by configure_blog to save credentials.";
 
         var profiles = config.Blogs.Select(b => new
         {

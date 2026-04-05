@@ -31,9 +31,7 @@ public class BlogClientFactory
 
         if (string.IsNullOrEmpty(profile.Username) || string.IsNullOrEmpty(profile.Password))
             throw new InvalidOperationException(
-                $"Credentials missing for '{blogName}'. The user needs to run these commands in the blog-mcp-server project directory:\n"
-                + $"  dotnet user-secrets set \"Blog:Blogs:{blogName}:Username\" \"<username>\"\n"
-                + $"  dotnet user-secrets set \"Blog:Blogs:{blogName}:Password\" \"<password>\"");
+                $"Credentials missing for '{blogName}'. Ask the user for their username and password, then call configure_blog to save them.");
 
         var rpc = new XmlRpcClient(_httpClient, profile.XmlRpcEndpoint);
         return CreateForApi(profile.PreferredApi, rpc, profile);

@@ -69,7 +69,11 @@ if (args.Length > 0 && args[0] is "--test" or "--post" or "--edit")
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Load blog profiles from configuration (appsettings.json, user-secrets, env vars)
+// Load appsettings.local.json from the exe directory
+var exeDir = AppContext.BaseDirectory;
+builder.Configuration.AddJsonFile(Path.Combine(exeDir, "appsettings.local.json"), optional: true, reloadOnChange: false);
+
+// Bind blog profiles from configuration
 var blogConfig = new BlogConfiguration();
 builder.Configuration.GetSection("Blog").Bind(blogConfig);
 builder.Services.AddSingleton(blogConfig);
