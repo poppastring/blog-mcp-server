@@ -12,13 +12,15 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
 {
     public string ApiName => "Moveable Type";
 
-    // MT doesn't define core post CRUD; delegate to a companion MetaWeblog or Blogger client
+    // MT doesn't define core post CRUD; delegate to MetaWeblog for most, Blogger for delete
     private readonly IBlogClient? _companion;
+    private readonly BloggerClient? _bloggerClient;
 
     public MovableTypeClient(XmlRpcClient rpc, BlogProfile profile, IBlogClient? companion = null)
         : base(rpc, profile)
     {
         _companion = companion;
+        _bloggerClient = new BloggerClient(rpc, profile);
     }
 
     // Post operations delegate to companion client
@@ -35,7 +37,7 @@ public class MovableTypeClient : XmlRpcBlogClientBase, IBlogClient
         => EnsureCompanion().EditPostAsync(postId, post, publish);
 
     public Task<bool> DeletePostAsync(string postId)
-        => EnsureCompanion().DeletePostAsync(postId);
+        => _bloggerClient!.DeletePostAsync(postId);
 
     // MT-specific: category management
     public async Task<List<BlogCategory>> GetCategoriesAsync()
