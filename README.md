@@ -46,7 +46,7 @@ Add to your MCP configuration:
   "mcpServers": {
     "blog": {
       "command": "dotnet",
-      "args": ["run", "--project", "C:\\dev\\github\\blog-mcp-server"]
+      "args": ["run", "--project", "C:\\dev\\tools\\blog-mcp-server"]
     }
   }
 }
